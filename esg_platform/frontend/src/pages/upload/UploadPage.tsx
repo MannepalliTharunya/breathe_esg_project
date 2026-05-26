@@ -1,0 +1,255 @@
+import { useState, useCallback } from "react";
+import { useDropzone } from "react-dropzone";
+import { Upload, FileText, RefreshCw, Eye, AlertCircle, CheckCircle } from "lucide-react";
+import { useBatches, useUpload, useReprocess } from "../../hooks/useIngestion";
+import { BatchStatusBadge, SourceBadge } from "../../components/ui/StatusBadge";
+import { Spinner, InlineSpinner } from "../../components/ui/Spinner";
+import { PreviewModal } from "./PreviewModal";
+import type { UploadBatch } from "../../types";
+import { format } from "date-fns";
+
+const SOURCE_TYPES = [
+  { value: "sap",     label: "SAP Fuel & Procurement" },
+  { value: "utility", label: "Utility Electricity" },
+  { value: "travel",  label: "Corporate Travel" },
+];
+
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+export function UploadPage() {
+  const [sourceType, setSourceType] = useState("sap");
+  const [notes, setNotes] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [previewBatch, setPreviewBatch] = useState<string | null>(null);
+
+  const { data, isLoading } = useBatches();
+  const upload = useUpload();
+  const reprocess = useReprocess();
+
+  const onDrop = useCallback((accepted: File[]) => {
+    if (accepted[0]) setFile(accepted[0]);
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: { "text/csv": [".csv"], "application/vnd.ms-excel": [".xls", ".xlsx"] },
+    maxFiles: 1,
+    maxSize: 100 * 1024 * 1024,
+  });
+
+  const handleUpload = async () => {
+    if (!file) return;
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("source_type", sourceType);
+    fd.append("notes", notes);
+    await upload.mutateAsync(fd);
+    setFile(null);
+    setNotes("");
+  };
+
+  const batches = data?.results ?? [];
+
+  return (
+    <div>
+      <h4 className="fw-bold mb-1">Upload ESG Data</h4>
+      <p className="text-muted small mb-4">Upload CSV files from SAP, utility providers, or travel systems.</p>
+
+      <div className="row g-4">
+        {/* Upload form */}
+        <div className="col-md-5">
+          <div className="card">
+            <div className="card-header fw-semibold">New Upload</div>
+            <div className="card-body">
+              {/* Source type */}
+              <div className="mb-3">
+                <label className="form-label fw-semibold small">Data Source *</label>
+                <div className="d-flex flex-column gap-2">
+                  {SOURCE_TYPES.map(s => (
+                    <div key={s.value} className="form-check">
+                      <input className="form-check-input" type="radio" name="source"
+                        id={`src-${s.value}`} value={s.value}
+                        checked={sourceType === s.value}
+                        onChange={() => setSourceType(s.value)} />
+                      <label className="form-check-label" htmlFor={`src-${s.value}`}>
+                        {s.label}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Drop zone */}
+              <div className="mb-3">
+                <label className="form-label fw-semibold small">CSV File *</label>
+                <div {...getRootProps()} className={`upload-zone ${isDragActive ? "drag-active" : ""}`}>
+                  <input {...getInputProps()} />
+                  {file ? (
+                    <div>
+                      <FileText size={32} className="text-success mb-2" />
+                      <div className="fw-semibold">{file.name}</div>
+                      <div className="text-muted small">{formatBytes(file.size)}</div>
+                      <button className="btn btn-link btn-sm text-danger p-0 mt-1"
+                        onClick={e => { e.stopPropagation(); setFile(null); }}>
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <Upload size={32} className="text-muted mb-2" />
+                      <div className="fw-semibold">
+                        {isDragActive ? "Drop file here" : "Drag & drop or click to browse"}
+                      </div>
+                      <div className="text-muted small mt-1">CSV, XLS, XLSX · max 100 MB</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div className="mb-3">
+                <label className="form-label fw-semibold small">Notes (optional)</label>
+                <textarea className="form-control form-control-sm" rows={2}
+                  placeholder="e.g. Q1 2024 SAP export from Plant DE01"
+                  value={notes} onChange={e => setNotes(e.target.value)} />
+              </div>
+
+              <button
+                className="btn btn-success w-100"
+                onClick={handleUpload}
+                disabled={!file || upload.isPending}
+              >
+                {upload.isPending ? <><InlineSpinner />Processing…</> : <><Upload size={14} className="me-2" />Upload & Process</>}
+              </button>
+
+              {upload.isSuccess && (
+                <div className="alert alert-success mt-3 py-2 small">
+                  <CheckCircle size={14} className="me-1" />
+                  File uploaded. Processing started in background.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Format hints */}
+          <div className="card mt-3">
+            <div className="card-header small fw-semibold">Expected Columns</div>
+            <div className="card-body small">
+              {sourceType === "sap" && (
+                <div>
+                  <div className="fw-semibold mb-1">SAP / German columns supported:</div>
+                  <code className="d-block text-muted">Plant Code, Material Group, Fuel Type (Material), Quantity (Menge), Unit (ME), Cost Center (Kostenstelle), Posting Date (Buchungsdatum), Vendor Name (Lieferant)</code>
+                </div>
+              )}
+              {sourceType === "utility" && (
+                <div>
+                  <code className="d-block text-muted">Meter ID, Billing Start Date, Billing End Date, kWh Usage, Tariff Type, Peak Usage, Off Peak Usage, Facility, Supplier</code>
+                </div>
+              )}
+              {sourceType === "travel" && (
+                <div>
+                  <code className="d-block text-muted">Employee Name, Travel Type, Departure Airport, Arrival Airport, Distance (km), Cabin Class, Hotel Nights, Travel Date, Department</code>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Upload history */}
+        <div className="col-md-7">
+          <div className="card">
+            <div className="card-header d-flex align-items-center justify-content-between">
+              <span className="fw-semibold">Upload History</span>
+              <span className="badge bg-secondary">{data?.count ?? 0} batches</span>
+            </div>
+            {isLoading ? <Spinner /> : (
+              <div className="table-responsive">
+                <table className="table table-hover table-sm mb-0">
+                  <thead className="table-light">
+                    <tr>
+                      <th>File</th>
+                      <th>Source</th>
+                      <th>Status</th>
+                      <th className="text-end">Rows</th>
+                      <th className="text-end">Failed</th>
+                      <th className="text-end">Suspicious</th>
+                      <th>Uploaded</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {batches.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="text-center text-muted py-4">No uploads yet</td>
+                      </tr>
+                    ) : batches.map((b: UploadBatch) => (
+                      <tr key={b.id}>
+                        <td>
+                          <div className="text-truncate" style={{ maxWidth: 160 }} title={b.original_filename}>
+                            <FileText size={12} className="me-1 text-muted" />
+                            {b.original_filename}
+                          </div>
+                          {b.error_summary && (
+                            <div className="text-danger small text-truncate" style={{ maxWidth: 160 }}>
+                              <AlertCircle size={10} className="me-1" />{b.error_summary}
+                            </div>
+                          )}
+                        </td>
+                        <td><SourceBadge source={b.source_type} /></td>
+                        <td>
+                          <BatchStatusBadge status={b.status} />
+                          {(b.status === "processing" || b.status === "pending") && (
+                            <span className="spinner-border spinner-border-sm ms-1 text-info" />
+                          )}
+                        </td>
+                        <td className="text-end">{b.total_rows.toLocaleString()}</td>
+                        <td className="text-end">
+                          <span className={b.failed_rows > 0 ? "text-danger fw-semibold" : "text-muted"}>
+                            {b.failed_rows}
+                          </span>
+                        </td>
+                        <td className="text-end">
+                          <span className={b.suspicious_rows > 0 ? "text-warning fw-semibold" : "text-muted"}>
+                            {b.suspicious_rows}
+                          </span>
+                        </td>
+                        <td className="text-nowrap small text-muted">
+                          {format(new Date(b.created_at), "dd MMM HH:mm")}
+                        </td>
+                        <td>
+                          <div className="d-flex gap-1">
+                            <button className="btn btn-outline-secondary btn-sm py-0 px-1"
+                              title="Preview rows"
+                              onClick={() => setPreviewBatch(b.id)}>
+                              <Eye size={12} />
+                            </button>
+                            {b.status === "failed" && (
+                              <button className="btn btn-outline-warning btn-sm py-0 px-1"
+                                title="Reprocess"
+                                disabled={reprocess.isPending}
+                                onClick={() => reprocess.mutate(b.id)}>
+                                <RefreshCw size={12} />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {previewBatch && (
+        <PreviewModal batchId={previewBatch} onClose={() => setPreviewBatch(null)} />
+      )}
+    </div>
+  );
+}

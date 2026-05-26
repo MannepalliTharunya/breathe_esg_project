@@ -1,0 +1,14 @@
+{% extends "emails/base.html" %}
+
+{% block subject %}Your ESG report is ready{% endblock %}
+
+{% block content %}
+<p>Hi {{ name }},</p>
+<p>Your ESG report <strong>{{ report_name }}</strong> has been generated and is ready to download.</p>
+<p style="text-align:center; margin: 32px 0;">
+  <a href="{{ report_url }}" class="btn">View report</a>
+</p>
+<p style="font-size:13px; color:#6b7280;">
+  Generated on {{ generated_at }}. Report type: {{ report_type }}.
+</p>
+{% endblock %}
