@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Plus, Upload, Filter } from "lucide-react";
 import { useDataPoints, usePeriods } from "@/hooks/useESGData";
+import { useESGCategories } from "@/hooks/useMasterData";
 import { PageLoader } from "@/components/ui/LoadingSpinner";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { DataPointModal } from "@/components/esg/DataPointModal";
@@ -8,18 +9,25 @@ import { BulkImportModal } from "@/components/esg/BulkImportModal";
 import { formatDate } from "@/utils/formatters";
 import type { DataPointFilters, ESGCategory, DataStatus } from "@/types/esg.types";
 
-const CATEGORY_LABELS: Record<ESGCategory, string> = {
-  E: "Environmental",
-  S: "Social",
-  G: "Governance",
-};
-
 export function ESGDataPage() {
   const [filters, setFilters] = useState<DataPointFilters>({ page: 1, page_size: 25 });
   const [showDataPointModal, setShowDataPointModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
-  const { data, isLoading } = useDataPoints(filters);
+  const { data, isLoading, isError, error } = useDataPoints(filters);
   const { data: periods } = usePeriods();
+  const { data: categories } = useESGCategories();
+
+  const categoryOptions =
+    categories?.results?.length
+      ? categories.results.map((c) => ({ code: c.code as ESGCategory, name: c.name }))
+      : [
+          { code: "E" as ESGCategory, name: "Environmental" },
+          { code: "S" as ESGCategory, name: "Social" },
+          { code: "G" as ESGCategory, name: "Governance" },
+        ];
+
+  const categoryLabel = (code: ESGCategory) =>
+    categoryOptions.find((c) => c.code === code)?.name ?? code;
 
   const updateFilter = (key: keyof DataPointFilters, value: string | undefined) => {
     setFilters((f) => ({ ...f, [key]: value || undefined, page: 1 }));
@@ -57,8 +65,8 @@ export function ESGDataPage() {
             aria-label="Filter by category"
           >
             <option value="">All categories</option>
-            {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
-              <option key={k} value={k}>{v}</option>
+            {categoryOptions.map(({ code, name }) => (
+              <option key={code} value={code}>{name}</option>
             ))}
           </select>
 
@@ -76,7 +84,7 @@ export function ESGDataPage() {
 
           <select
             className="input w-auto"
-            value={filters.status as string ?? ""}
+            value={(filters.status as string) ?? ""}
             onChange={(e) => updateFilter("status", e.target.value as DataStatus)}
             aria-label="Filter by status"
           >
@@ -87,6 +95,13 @@ export function ESGDataPage() {
           </select>
         </div>
       </div>
+
+      {isError && (
+        <div className="card p-4 border-red-200 bg-red-50 text-red-800 text-sm" role="alert">
+          Could not load ESG data. Ensure you are logged in, an organization is selected, and the backend is running.
+          {error instanceof Error && <p className="mt-1 text-xs opacity-80">{error.message}</p>}
+        </div>
+      )}
 
       {/* Table */}
       {isLoading ? (
@@ -124,7 +139,7 @@ export function ESGDataPage() {
                           dp.metric.category === "E" ? "badge-green" :
                           dp.metric.category === "S" ? "badge-blue" : "bg-purple-100 text-purple-800 badge"
                         }`}>
-                          {CATEGORY_LABELS[dp.metric.category]}
+                          {categoryLabel(dp.metric.category)}
                         </span>
                       </td>
                       <td className="px-4 py-3 font-mono text-gray-900">
@@ -155,7 +170,7 @@ export function ESGDataPage() {
           </div>
 
           {/* Pagination */}
-          {data && data.pagination.total_pages > 1 && (
+          {data?.pagination && data.pagination.total_pages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
               <p className="text-sm text-gray-500">
                 Page {data.pagination.current_page} of {data.pagination.total_pages} ({data.pagination.count} total)

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import apiClient from "@/services/api/client";
 import { toast } from "@/store/uiStore";
+import { useOrganizationStore } from "@/store/organizationStore";
 
 export const FRAMEWORK_KEYS = {
   all: ["frameworks"] as const,
@@ -9,10 +10,12 @@ export const FRAMEWORK_KEYS = {
 };
 
 export function useFrameworks() {
+  const { activeOrganizationId } = useOrganizationStore();
   return useQuery({
     queryKey: FRAMEWORK_KEYS.all,
-    queryFn: () => apiClient.get("/frameworks/").then((r) => r.data),
-    staleTime: 1000 * 60 * 30, // frameworks rarely change
+    queryFn: () => apiClient.get("/frameworks/", { params: { page_size: "100" } }).then((r) => r.data),
+    staleTime: 1000 * 60 * 30,
+    enabled: !!activeOrganizationId,
   });
 }
 

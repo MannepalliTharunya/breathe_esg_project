@@ -134,11 +134,11 @@ class ESGDataPoint(BaseModel, SoftDeleteModel):
 
     # Provenance
     status = models.CharField(max_length=20, choices=DataStatus.choices, default=DataStatus.DRAFT, db_index=True)
-    data_source = models.CharField(max_length=100, blank=True)
+    data_source = models.CharField(max_length=100, blank=True, help_text="Data source code or label from master data")
     collection_method = models.CharField(
-        max_length=30,
-        choices=[("manual", "Manual"), ("automated", "Automated"), ("estimated", "Estimated"), ("calculated", "Calculated")],
-        default="manual",
+        max_length=50,
+        default="manual_entry",
+        help_text="Collection method code from master data",
     )
     confidence_level = models.PositiveSmallIntegerField(
         default=100,
@@ -229,3 +229,113 @@ class MaterialityAssessment(BaseModel):
     class Meta:
         db_table = "esg_materiality_assessments"
         unique_together = [("organization", "reporting_period", "topic")]
+
+
+# ---------------------------------------------------------------------------
+# Master / reference data (dropdowns & catalogues)
+# ---------------------------------------------------------------------------
+
+
+class ESGCategoryMaster(BaseModel):
+    """Reference table for Environmental / Social / Governance categories."""
+
+    code = models.CharField(max_length=1, unique=True, db_index=True)
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "esg_categories"
+        ordering = ["code"]
+        verbose_name_plural = "ESG categories"
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class EmissionScope(BaseModel):
+    """GHG Protocol emission scopes (Scope 1, 2, 3)."""
+
+    code = models.CharField(max_length=20, unique=True, db_index=True)
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "emission_scopes"
+        ordering = ["code"]
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class CollectionMethod(BaseModel):
+    """How an ESG data point was collected."""
+
+    code = models.CharField(max_length=50, unique=True, db_index=True)
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "collection_methods"
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class DataSource(BaseModel):
+    """Origin system or channel for ESG data."""
+
+    code = models.CharField(max_length=50, unique=True, db_index=True)
+    name = models.CharField(max_length=100)
+    source_type = models.CharField(
+        max_length=30,
+        choices=[
+            ("erp", "ERP"),
+            ("utility", "Utility"),
+            ("travel", "Travel"),
+            ("manual", "Manual"),
+            ("other", "Other"),
+        ],
+        default="other",
+    )
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "data_sources"
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class DataUpload(BaseModel):
+    """Tracks bulk file imports for audit and upload history UI."""
+
+    class UploadStatus(models.TextChoices):
+        SUCCESS = "success", "Success"
+        PARTIAL = "partial", "Partial"
+        FAILED = "failed", "Failed"
+
+    organization = models.ForeignKey(
+        "organizations.Organization", on_delete=models.CASCADE, related_name="data_uploads"
+    )
+    reporting_period = models.ForeignKey(
+        ReportingPeriod, on_delete=models.CASCADE, related_name="uploads"
+    )
+    uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="data_uploads")
+    file_name = models.CharField(max_length=255)
+    source_type = models.CharField(max_length=30, default="manual")
+    status = models.CharField(max_length=20, choices=UploadStatus.choices, default=UploadStatus.SUCCESS)
+    rows_created = models.PositiveIntegerField(default=0)
+    rows_updated = models.PositiveIntegerField(default=0)
+    rows_failed = models.PositiveIntegerField(default=0)
+    preview_rows = models.JSONField(default=list, help_text="First rows parsed for preview")
+    error_details = models.JSONField(default=list)
+
+    class Meta:
+        db_table = "esg_data_uploads"
+        ordering = ["-created_at"]

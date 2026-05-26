@@ -1,5 +1,6 @@
 import { useMetrics, usePeriods, useEmissionCategories } from "./useESGData";
 import { useFacilities, useDepartments, useOrganizations } from "./useOrganization";
+import { useCollectionMethods, useDataSources, useESGCategories } from "./useMasterData";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "@/services/api/client";
 
@@ -23,6 +24,9 @@ export function useEsgDropdowns(orgId: string) {
   const emissionCategories = useEmissionCategories();
   const organizations = useOrganizations();
   const frameworks = useESGFrameworks();
+  const collectionMethods = useCollectionMethods();
+  const dataSources = useDataSources();
+  const esgCategories = useESGCategories();
 
   return {
     metrics: {
@@ -59,6 +63,21 @@ export function useEsgDropdowns(orgId: string) {
       data: frameworks.data?.results ?? [],
       isLoading: frameworks.isLoading,
       isError: frameworks.isError,
+    },
+    collectionMethods: {
+      data: collectionMethods.data?.results ?? [],
+      isLoading: collectionMethods.isLoading,
+      isError: collectionMethods.isError,
+    },
+    dataSources: {
+      data: dataSources.data?.results ?? [],
+      isLoading: dataSources.isLoading,
+      isError: dataSources.isError,
+    },
+    esgCategories: {
+      data: esgCategories.data?.results ?? [],
+      isLoading: esgCategories.isLoading,
+      isError: esgCategories.isError,
     },
   };
 }

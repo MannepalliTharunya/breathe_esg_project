@@ -18,7 +18,9 @@ export const esgService = {
 
   // ── Reporting Periods ─────────────────────────────────────────────────────
   getPeriods: () =>
-    apiClient.get<PaginatedResponse<ReportingPeriod>>("/esg/periods/").then((r) => r.data),
+    apiClient
+      .get<PaginatedResponse<ReportingPeriod>>("/esg/periods/", { params: { page_size: "100" } })
+      .then((r) => r.data),
 
   createPeriod: (data: Omit<ReportingPeriod, "id" | "created_at" | "updated_at">) =>
     apiClient.post<ReportingPeriod>("/esg/periods/", data).then((r) => r.data),
@@ -46,14 +48,19 @@ export const esgService = {
       .post<ESGDataPoint>(`/esg/data-points/${id}/status/`, { status, review_notes: reviewNotes })
       .then((r) => r.data),
 
-  bulkImport: (file: File, reportingPeriodId: string) => {
+  bulkImport: (file: File, reportingPeriodId: string, sourceType?: string) => {
     const form = new FormData();
     form.append("file", file);
     form.append("reporting_period_id", reportingPeriodId);
+    if (sourceType) {
+      form.append("source_type", sourceType);
+    }
     return apiClient
-      .post<{ created: number; updated: number; errors: unknown[] }>("/esg/data-points/bulk-import/", form, {
-        headers: { "Content-Type": "multipart/form-data" },
-      })
+      .post<{ created: number; updated: number; errors: Array<{ row: number; error: string }> }>(
+        "/esg/data-points/bulk-import/",
+        form,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      )
       .then((r) => r.data);
   },
 

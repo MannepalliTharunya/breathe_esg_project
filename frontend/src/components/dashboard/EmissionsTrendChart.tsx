@@ -10,8 +10,12 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-export function EmissionsTrendChart() {
-  const { data: analytics, isLoading } = useAnalytics();
+interface EmissionsTrendChartProps {
+  periodId?: string;
+}
+
+export function EmissionsTrendChart({ periodId }: EmissionsTrendChartProps) {
+  const { data: analytics, isLoading } = useAnalytics(periodId);
 
   const trendData = analytics?.emissions_trend?.length > 0 ? analytics.emissions_trend : [];
 

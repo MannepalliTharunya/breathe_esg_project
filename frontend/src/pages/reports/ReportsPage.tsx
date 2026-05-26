@@ -2,18 +2,10 @@ import { useState } from "react";
 import { Plus, FileText, Download, RefreshCw } from "lucide-react";
 import { useReports, useCreateReport, useRegenerateReport } from "@/hooks/useReports";
 import { usePeriods } from "@/hooks/useESGData";
+import { useFrameworks } from "@/hooks/useFrameworks";
 import { PageLoader } from "@/components/ui/LoadingSpinner";
 import { formatDate } from "@/utils/formatters";
 import { formatBytes } from "@/utils/formatters";
-
-const REPORT_TYPE_LABELS: Record<string, string> = {
-  gri: "GRI Standards",
-  tcfd: "TCFD",
-  sasb: "SASB",
-  cdp: "CDP",
-  csrd: "CSRD",
-  custom: "Custom",
-};
 
 const STATUS_STYLES: Record<string, string> = {
   ready: "badge-green",
@@ -25,11 +17,16 @@ const STATUS_STYLES: Record<string, string> = {
 
 export function ReportsPage() {
   const { data, isLoading } = useReports();
-  const { data: periods } = usePeriods();
+  const { data: periods, isLoading: periodsLoading } = usePeriods();
+  const { data: frameworks, isLoading: frameworksLoading } = useFrameworks();
   const createReport = useCreateReport();
   const regenerate = useRegenerateReport();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: "", report_type: "gri", reporting_period: "" });
+
+  const frameworkOptions = frameworks?.results ?? [];
+  const reportTypeLabel = (code: string) =>
+    frameworkOptions.find((f) => f.code === code)?.name ?? code.toUpperCase();
 
   const handleCreate = () => {
     if (!form.name || !form.reporting_period) return;
@@ -73,10 +70,15 @@ export function ReportsPage() {
                 className="input"
                 value={form.report_type}
                 onChange={(e) => setForm((f) => ({ ...f, report_type: e.target.value }))}
+                disabled={frameworksLoading}
               >
-                {Object.entries(REPORT_TYPE_LABELS).map(([k, v]) => (
-                  <option key={k} value={k}>{v}</option>
-                ))}
+                {frameworkOptions.length === 0 ? (
+                  <option value="gri">GRI Standards</option>
+                ) : (
+                  frameworkOptions.map((fw) => (
+                    <option key={fw.id} value={fw.code}>{fw.name}</option>
+                  ))
+                )}
               </select>
             </div>
             <div>
@@ -85,8 +87,9 @@ export function ReportsPage() {
                 className="input"
                 value={form.reporting_period}
                 onChange={(e) => setForm((f) => ({ ...f, reporting_period: e.target.value }))}
+                disabled={periodsLoading}
               >
-                <option value="">Select period</option>
+                <option value="">{periodsLoading ? "Loading…" : "Select period"}</option>
                 {periods?.results.map((p) => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
@@ -123,7 +126,7 @@ export function ReportsPage() {
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-gray-900 truncate">{report.name}</p>
                     <div className="flex items-center gap-3 mt-0.5">
-                      <span className="text-xs text-gray-400">{REPORT_TYPE_LABELS[report.report_type]}</span>
+                      <span className="text-xs text-gray-400">{reportTypeLabel(report.report_type)}</span>
                       <span className="text-xs text-gray-300">·</span>
                       <span className="text-xs text-gray-400">{formatDate(report.created_at)}</span>
                       {report.file_size_bytes && (

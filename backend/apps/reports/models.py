@@ -10,6 +10,8 @@ class Report(BaseModel):
         SASB = "sasb", "SASB"
         CDP = "cdp", "CDP"
         CSRD = "csrd", "CSRD"
+        BRSR = "brsr", "BRSR"
+        GHG_PROTOCOL = "ghg_protocol", "GHG Protocol"
         CUSTOM = "custom", "Custom"
 
     class ReportStatus(models.TextChoices):

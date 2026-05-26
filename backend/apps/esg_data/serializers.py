@@ -1,5 +1,15 @@
 from rest_framework import serializers
-from .models import EmissionCategory, MetricDefinition, ReportingPeriod, ESGDataPoint, ESGTarget, MaterialityAssessment
+from .models import (
+    EmissionCategory,
+    MetricDefinition,
+    ReportingPeriod,
+    ESGDataPoint,
+    ESGTarget,
+    MaterialityAssessment,
+    DataStatus,
+    CollectionMethod,
+    DataSource,
+)
 
 
 class EmissionCategorySerializer(serializers.ModelSerializer):
@@ -54,9 +64,30 @@ class ESGDataPointWriteSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({"boolean_value": "Required for boolean metrics."})
         return attrs
 
+    def validate_collection_method(self, value):
+        if CollectionMethod.objects.filter(code=value, is_active=True).exists():
+            return value
+        legacy = {"manual", "automated", "estimated", "calculated", "manual_entry"}
+        if value in legacy:
+            return value
+        raise serializers.ValidationError(f"Unknown collection method: {value}")
+
+    def validate_data_source(self, value):
+        if not value:
+            return value
+        if DataSource.objects.filter(code=value, is_active=True).exists():
+            return value
+        if DataSource.objects.filter(name__iexact=value, is_active=True).exists():
+            return value
+        return value
+
     def create(self, validated_data):
+        from django.utils import timezone
+
         validated_data["organization"] = self.context["organization"]
         validated_data["submitted_by"] = self.context["request"].user
+        validated_data.setdefault("status", DataStatus.SUBMITTED)
+        validated_data.setdefault("submitted_at", timezone.now())
         return super().create(validated_data)
 
 
@@ -80,9 +111,7 @@ class ESGDataPointReadSerializer(serializers.ModelSerializer):
 
 
 class DataPointStatusUpdateSerializer(serializers.Serializer):
-    status = serializers.ChoiceField(choices=ESGDataPoint.DataStatus.choices if hasattr(ESGDataPoint, 'DataStatus') else [
-        ("submitted", "Submitted"), ("approved", "Approved"), ("rejected", "Rejected")
-    ])
+    status = serializers.ChoiceField(choices=DataStatus.choices)
     review_notes = serializers.CharField(required=False, allow_blank=True)
 
 

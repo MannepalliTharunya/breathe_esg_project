@@ -1,7 +1,13 @@
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { esgService } from "@/services/api/esg.service";
 import { toast } from "@/store/uiStore";
+import { useOrganizationStore } from "@/store/organizationStore";
 import type { DataPointFilters, ESGDataPointCreate } from "@/types/esg.types";
+
+function useOrgEnabled() {
+  const { activeOrganizationId } = useOrganizationStore();
+  return !!activeOrganizationId;
+}
 
 export const ESG_KEYS = {
   metrics: (params?: Record<string, string>) => ["esg", "metrics", params] as const,
@@ -14,24 +20,30 @@ export const ESG_KEYS = {
 };
 
 export function useMetrics(params?: Record<string, string>) {
+  const enabled = useOrgEnabled();
   return useQuery({
     queryKey: ESG_KEYS.metrics(params),
-    queryFn: () => esgService.getMetrics(params),
+    queryFn: () => esgService.getMetrics({ page_size: "200", ...params }),
+    enabled,
   });
 }
 
 export function usePeriods() {
+  const enabled = useOrgEnabled();
   return useQuery({
     queryKey: ESG_KEYS.periods(),
-    queryFn: esgService.getPeriods,
+    queryFn: () => esgService.getPeriods(),
+    enabled,
   });
 }
 
 export function useDataPoints(filters?: DataPointFilters) {
+  const enabled = useOrgEnabled();
   return useQuery({
     queryKey: ESG_KEYS.dataPoints(filters),
     queryFn: () => esgService.getDataPoints(filters),
     placeholderData: keepPreviousData,
+    enabled,
   });
 }
 
@@ -44,16 +56,20 @@ export function useDataPoint(id: string) {
 }
 
 export function useESGSummary(periodId?: string) {
+  const enabled = useOrgEnabled();
   return useQuery({
     queryKey: ESG_KEYS.summary(periodId),
     queryFn: () => esgService.getSummary(periodId),
+    enabled,
   });
 }
 
 export function useDashboardStats(periodId?: string) {
+  const enabled = useOrgEnabled();
   return useQuery({
     queryKey: ["esg", "dashboard-stats", periodId],
     queryFn: () => esgService.getDashboardStats(periodId),
+    enabled,
   });
 }
 
@@ -65,9 +81,11 @@ export function useUploadHistory(params?: Record<string, string>) {
 }
 
 export function useAnalytics(periodId?: string) {
+  const enabled = useOrgEnabled();
   return useQuery({
     queryKey: ["esg", "analytics", periodId],
     queryFn: () => esgService.getAnalytics(periodId),
+    enabled,
   });
 }
 
@@ -107,10 +125,21 @@ export function useUpdateDataPointStatus() {
 export function useBulkImport() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ file, periodId }: { file: File; periodId: string }) =>
-      esgService.bulkImport(file, periodId),
+    mutationFn: ({
+      file,
+      periodId,
+      sourceType,
+    }: {
+      file: File;
+      periodId: string;
+      sourceType?: string;
+    }) => esgService.bulkImport(file, periodId, sourceType),
     onSuccess: (result) => {
       qc.invalidateQueries({ queryKey: ["esg", "data-points"] });
+      qc.invalidateQueries({ queryKey: ["esg", "dashboard-stats"] });
+      qc.invalidateQueries({ queryKey: ["esg", "summary"] });
+      qc.invalidateQueries({ queryKey: ["esg", "upload-history"] });
+      qc.invalidateQueries({ queryKey: ["master", "uploads"] });
       toast.success(
         "Import complete",
         `Created: ${result.created}, Updated: ${result.updated}, Errors: ${result.errors.length}`

@@ -20,6 +20,10 @@ class ReportGenerationService:
             "gri": self._generate_gri,
             "tcfd": self._generate_tcfd,
             "sasb": self._generate_sasb,
+            "cdp": self._generate_gri,
+            "csrd": self._generate_gri,
+            "brsr": self._generate_gri,
+            "ghg_protocol": self._generate_gri,
             "custom": self._generate_custom,
         }
         generator = generators.get(self.report.report_type, self._generate_custom)

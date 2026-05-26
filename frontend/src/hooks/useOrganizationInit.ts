@@ -11,20 +11,30 @@ import { useAuthStore } from "@/store/authStore";
 export function useOrganizationInit() {
   const { isAuthenticated } = useAuthStore();
   const { data, isLoading } = useOrganizations();
-  const { activeOrganizationId, setActiveOrganization } = useOrganizationStore();
+  const { activeOrganizationId, setActiveOrganization, clearOrganization } = useOrganizationStore();
 
   useEffect(() => {
-    if (!isAuthenticated || isLoading || !data?.results.length) return;
+    if (!isAuthenticated || isLoading) return;
 
-    // Already have an active org that exists in the list — keep it
-    if (activeOrganizationId) {
-      const existing = data.results.find((o) => o.id === activeOrganizationId);
-      if (existing) return;
+    if (!data?.results.length) {
+      clearOrganization();
+      return;
     }
 
-    // Auto-select the first org
-    setActiveOrganization(data.results[0]);
-  }, [isAuthenticated, isLoading, data, activeOrganizationId, setActiveOrganization]);
+    const existing = activeOrganizationId
+      ? data.results.find((o) => o.id === activeOrganizationId)
+      : undefined;
+
+    if (existing) {
+      setActiveOrganization(existing);
+      return;
+    }
+
+    // Prefer org with seeded demo data, else first membership
+    const preferred =
+      data.results.find((o) => o.name === "RGVF Manufacturing") ?? data.results[0];
+    setActiveOrganization(preferred);
+  }, [isAuthenticated, isLoading, data, activeOrganizationId, setActiveOrganization, clearOrganization]);
 
   return { isLoading, organizations: data?.results ?? [] };
 }
