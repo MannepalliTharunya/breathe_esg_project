@@ -5,6 +5,14 @@ from .base import *  # noqa: F401, F403
 
 DEBUG = True
 
+# Use SQLite for local development
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }
+}
+
 INSTALLED_APPS += ["debug_toolbar"]  # noqa: F405
 
 MIDDLEWARE = [
