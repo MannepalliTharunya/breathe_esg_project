@@ -176,25 +176,9 @@ SPECTACULAR_SETTINGS = {
 }
 
 # ── Logging ───────────────────────────────────────────────────────────────────
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "verbose": {"format": "{levelname} {asctime} {module} {message}", "style": "{"},
-    },
-    "handlers": {
-        "console": {"class": "logging.StreamHandler", "formatter": "verbose"},
-    },
-    "root": {"handlers": ["console"], "level": "INFO"},
-    "loggers": {
-        "django": {"handlers": ["console"], "level": "WARNING", "propagate": False},
-        "apps": {"handlers": ["console"], "level": "INFO", "propagate": False},
-        "celery": {"handlers": ["console"], "level": "INFO", "propagate": False},
-    },
-}
+LOGGING = {}
 
 FRONTEND_URL = config("FRONTEND_URL", default="http://localhost:3000")
-
 # ── Upload limits ─────────────────────────────────────────────────────────────
 DATA_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024   # 100 MB
 FILE_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024
