@@ -26,8 +26,10 @@ class IsTenantMember(BasePermission):
     def has_permission(self, request, view):
         if not request.user.is_authenticated:
             return False
-        if request.user.role == "admin" and request.user.is_staff:
+        # Superadmins bypass tenant check
+        if request.user.is_staff:
             return True
+        # Organization must be resolved (from header or user.organization)
         return request.organization is not None
 
     def has_object_permission(self, request, view, obj):

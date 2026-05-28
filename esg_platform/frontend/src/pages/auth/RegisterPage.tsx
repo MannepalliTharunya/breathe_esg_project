@@ -8,7 +8,7 @@ import { InlineSpinner } from "../../components/ui/Spinner";
 export function RegisterPage() {
   const [form, setForm] = useState({
     email: "", first_name: "", last_name: "",
-    password: "", password_confirm: "", role: "analyst",
+    password: "", password_confirm: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -27,7 +27,7 @@ export function RegisterPage() {
     setError("");
     setLoading(true);
     try {
-      const data = await authApi.register(form);
+      const data = await authApi.register({ ...form, role: "analyst" });
       login(data.access, data.refresh, data.user);
       navigate("/dashboard");
     } catch (err: unknown) {
@@ -75,14 +75,6 @@ export function RegisterPage() {
               <label className="form-label small fw-semibold">Email</label>
               <input type="email" className="form-control form-control-sm" required
                 value={form.email} onChange={set("email")} />
-            </div>
-            <div className="mb-2">
-              <label className="form-label small fw-semibold">Role</label>
-              <select className="form-select form-select-sm" value={form.role} onChange={set("role")}>
-                <option value="analyst">Analyst</option>
-                <option value="viewer">Viewer</option>
-                <option value="admin">Admin</option>
-              </select>
             </div>
             <div className="mb-2">
               <label className="form-label small fw-semibold">Password</label>

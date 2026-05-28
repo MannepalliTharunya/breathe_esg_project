@@ -55,7 +55,7 @@ class ApprovalWorkflowSerializer(serializers.ModelSerializer):
 
 
 class ApprovalActionSerializer(serializers.Serializer):
-    decision = serializers.ChoiceField(choices=ApprovalWorkflow.Decision.choices)
+    """Used for single-record approve/reject/flag — decision is implicit from the URL."""
     comment = serializers.CharField(required=False, allow_blank=True, default="")
 
 

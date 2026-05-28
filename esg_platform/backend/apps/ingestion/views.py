@@ -1,14 +1,17 @@
 import logging
+from django.http import HttpResponse
 from rest_framework import viewsets, status, generics
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.permissions import AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from apps.core.permissions import IsTenantMember, IsAdminOrAnalyst
 from .models import UploadBatch, RawRecord
 from .serializers import UploadBatchSerializer, UploadBatchCreateSerializer, RawRecordSerializer
 from .tasks import process_upload_batch
+from .templates import TEMPLATES
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +25,8 @@ class UploadBatchViewSet(viewsets.ModelViewSet):
     ordering = ["-created_at"]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return UploadBatch.objects.none()
         return UploadBatch.objects.filter(
             organization=self.request.organization
         ).select_related("facility", "created_by").order_by("-created_at")
@@ -32,7 +37,7 @@ class UploadBatchViewSet(viewsets.ModelViewSet):
         return UploadBatchSerializer
 
     def get_parsers(self):
-        if self.action == "create":
+        if getattr(self, "action", None) == "create":
             return [MultiPartParser(), FormParser()]
         return super().get_parsers()
 
@@ -88,6 +93,28 @@ class RawRecordListView(generics.ListAPIView):
     filterset_fields = ["batch", "source_type", "status"]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return RawRecord.objects.none()
         return RawRecord.objects.filter(
             organization=self.request.organization
         ).select_related("batch").order_by("batch", "row_number")
+
+
+@extend_schema(tags=["Ingestion"])
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def download_template(request, source_type: str):
+    """
+    Download a sample CSV template for the given source type.
+    No auth required — helps new users understand the expected format.
+    """
+    if source_type not in TEMPLATES:
+        return Response(
+            {"error": {"message": f"Unknown source type: {source_type!r}. Use: sap, utility, travel"}},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    filename, content = TEMPLATES[source_type]
+    response = HttpResponse(content, content_type="text/csv; charset=utf-8")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    response["Access-Control-Allow-Origin"] = "*"
+    return response

@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { Upload, FileText, RefreshCw, Eye, AlertCircle, CheckCircle } from "lucide-react";
+import { Upload, FileText, RefreshCw, Eye, AlertCircle, CheckCircle, Download } from "lucide-react";
 import { useBatches, useUpload, useReprocess } from "../../hooks/useIngestion";
 import { BatchStatusBadge, SourceBadge } from "../../components/ui/StatusBadge";
 import { Spinner, InlineSpinner } from "../../components/ui/Spinner";
@@ -13,6 +13,12 @@ const SOURCE_TYPES = [
   { value: "utility", label: "Utility Electricity" },
   { value: "travel",  label: "Corporate Travel" },
 ];
+
+const TEMPLATE_LABELS: Record<string, string> = {
+  sap:     "SAP Template",
+  utility: "Utility Template",
+  travel:  "Travel Template",
+};
 
 function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -51,6 +57,30 @@ export function UploadPage() {
     setFile(null);
     setNotes("");
   };
+
+  const handleDownloadTemplate = () => {
+    // Direct browser download — no auth needed
+    const url = `/api/ingestion/template/${sourceType}/`;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${sourceType}_template.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  // Warn if file name looks like wrong source type
+  const sourceWarning = (() => {
+    if (!file) return null;
+    const name = file.name.toLowerCase();
+    if (sourceType === "utility" && (name.includes("sap") || name.includes("fuel") || name.includes("travel") || name.includes("employee")))
+      return "⚠ File name suggests this may not be a utility/electricity file. Double-check your Data Source selection.";
+    if (sourceType === "sap" && (name.includes("employee") || name.includes("travel") || name.includes("kwh") || name.includes("meter")))
+      return "⚠ File name suggests this may not be a SAP fuel/procurement file.";
+    if (sourceType === "travel" && (name.includes("sap") || name.includes("fuel") || name.includes("kwh") || name.includes("meter")))
+      return "⚠ File name suggests this may not be a travel file.";
+    return null;
+  })();
 
   const batches = data?.results ?? [];
 
@@ -118,6 +148,13 @@ export function UploadPage() {
                   value={notes} onChange={e => setNotes(e.target.value)} />
               </div>
 
+              {/* Source mismatch warning */}
+              {sourceWarning && (
+                <div className="alert alert-warning py-2 small mb-3">
+                  {sourceWarning}
+                </div>
+              )}
+
               <button
                 className="btn btn-success w-100"
                 onClick={handleUpload}
@@ -135,26 +172,53 @@ export function UploadPage() {
             </div>
           </div>
 
-          {/* Format hints */}
+          {/* Format hints + template download */}
           <div className="card mt-3">
-            <div className="card-header small fw-semibold">Expected Columns</div>
+            <div className="card-header small fw-semibold d-flex align-items-center justify-content-between">
+              <span>Expected Columns</span>
+              <button
+                className="btn btn-outline-success btn-sm d-flex align-items-center gap-1"
+                onClick={handleDownloadTemplate}
+                title={`Download ${TEMPLATE_LABELS[sourceType]} CSV`}
+              >
+                <Download size={13} />
+                Download Sample Template
+              </button>
+            </div>
             <div className="card-body small">
               {sourceType === "sap" && (
                 <div>
-                  <div className="fw-semibold mb-1">SAP / German columns supported:</div>
-                  <code className="d-block text-muted">Plant Code, Material Group, Fuel Type (Material), Quantity (Menge), Unit (ME), Cost Center (Kostenstelle), Posting Date (Buchungsdatum), Vendor Name (Lieferant)</code>
+                  <div className="fw-semibold mb-1 text-muted">SAP / German columns supported:</div>
+                  <div className="d-flex flex-wrap gap-1 mt-1">
+                    {["Plant Code","Material Group","Fuel Type (Material)","Quantity (Menge)","Unit (ME)","Cost Center (Kostenstelle)","Posting Date (Buchungsdatum)","Vendor Name (Lieferant)"].map(c => (
+                      <span key={c} className="badge bg-light text-dark border">{c}</span>
+                    ))}
+                  </div>
                 </div>
               )}
               {sourceType === "utility" && (
                 <div>
-                  <code className="d-block text-muted">Meter ID, Billing Start Date, Billing End Date, kWh Usage, Tariff Type, Peak Usage, Off Peak Usage, Facility, Supplier</code>
+                  <div className="fw-semibold mb-1 text-muted">Utility electricity columns:</div>
+                  <div className="d-flex flex-wrap gap-1 mt-1">
+                    {["Meter ID","Billing Start Date","Billing End Date","kWh Usage","Tariff Type","Peak Usage","Off Peak Usage","Facility","Supplier"].map(c => (
+                      <span key={c} className="badge bg-light text-dark border">{c}</span>
+                    ))}
+                  </div>
                 </div>
               )}
               {sourceType === "travel" && (
                 <div>
-                  <code className="d-block text-muted">Employee Name, Travel Type, Departure Airport, Arrival Airport, Distance (km), Cabin Class, Hotel Nights, Travel Date, Department</code>
+                  <div className="fw-semibold mb-1 text-muted">Corporate travel columns:</div>
+                  <div className="d-flex flex-wrap gap-1 mt-1">
+                    {["Employee Name","Travel Type","Departure Airport","Arrival Airport","Distance (km)","Cabin Class","Hotel Nights","Travel Date","Department"].map(c => (
+                      <span key={c} className="badge bg-light text-dark border">{c}</span>
+                    ))}
+                  </div>
                 </div>
               )}
+              <div className="alert alert-info py-2 mt-3 mb-0 small">
+                <strong>Tip:</strong> Click <em>Download Sample Template</em> above to get a ready-to-fill CSV with the correct column names and example data.
+              </div>
             </div>
           </div>
         </div>
@@ -189,13 +253,20 @@ export function UploadPage() {
                     ) : batches.map((b: UploadBatch) => (
                       <tr key={b.id}>
                         <td>
-                          <div className="text-truncate" style={{ maxWidth: 160 }} title={b.original_filename}>
+                          <div className="text-truncate" style={{ maxWidth: 180 }} title={b.original_filename}>
                             <FileText size={12} className="me-1 text-muted" />
                             {b.original_filename}
                           </div>
                           {b.error_summary && (
-                            <div className="text-danger small text-truncate" style={{ maxWidth: 160 }}>
-                              <AlertCircle size={10} className="me-1" />{b.error_summary}
+                            <div
+                              className="text-danger small mt-1"
+                              style={{ maxWidth: 220, cursor: "help" }}
+                              title={b.error_summary}
+                            >
+                              <AlertCircle size={10} className="me-1 flex-shrink-0" />
+                              <span className="text-truncate d-inline-block" style={{ maxWidth: 200, verticalAlign: "middle" }}>
+                                {b.error_summary}
+                              </span>
                             </div>
                           )}
                         </td>

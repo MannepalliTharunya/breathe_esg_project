@@ -69,7 +69,7 @@ export function ReviewPage() {
 
   const setFilter = (key: string, value: string | boolean | number | undefined) => {
     setFilters(f => {
-      const next = { ...f, page: 1 };
+      const next: Record<string, string | boolean | number> = { ...f, page: 1 };
       if (value === undefined || value === "") {
         delete next[key];
       } else {
@@ -247,7 +247,9 @@ export function ReviewPage() {
                     <td><RecordStatusBadge status={record.status} /></td>
                     <td>
                       {record.is_suspicious && (
-                        <AlertTriangle size={14} className="text-warning" title={record.suspicious_reasons.join("; ")} />
+                        <span title={record.suspicious_reasons.join("; ")}>
+                          <AlertTriangle size={14} className="text-warning" />
+                        </span>
                       )}
                       {record.validation_errors.length > 0 && (
                         <span className="badge bg-danger ms-1">{record.validation_errors.length} err</span>

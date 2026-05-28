@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from "axios";
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? "/api";
+const BASE_URL = (import.meta as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL ?? "/api";
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: BASE_URL,
@@ -13,9 +13,17 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const raw = localStorage.getItem("esg_auth");
   if (raw) {
     try {
-      const { accessToken, user } = JSON.parse(raw);
-      if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
-      if (user?.organization) config.headers["X-Organization-Id"] = user.organization;
+      const parsed = JSON.parse(raw) as {
+        accessToken?: string;
+        user?: { organization?: string };
+      };
+      if (parsed.accessToken) {
+        config.headers.Authorization = `Bearer ${parsed.accessToken}`;
+      }
+      // Always send org header if available — backend also falls back to user.organization
+      if (parsed.user?.organization) {
+        config.headers["X-Organization-Id"] = parsed.user.organization;
+      }
     } catch {}
   }
   return config;
@@ -46,7 +54,7 @@ apiClient.interceptors.response.use(
       orig._retry = true;
       isRefreshing = true;
       const raw = localStorage.getItem("esg_auth");
-      const { refreshToken } = raw ? JSON.parse(raw) : {};
+      const { refreshToken } = (raw ? JSON.parse(raw) : {}) as { refreshToken?: string };
       if (!refreshToken) {
         localStorage.removeItem("esg_auth");
         window.location.href = "/login";
@@ -54,7 +62,7 @@ apiClient.interceptors.response.use(
       }
       try {
         const { data } = await axios.post(`${BASE_URL}/auth/token/refresh/`, { refresh: refreshToken });
-        const stored = JSON.parse(localStorage.getItem("esg_auth") || "{}");
+        const stored = JSON.parse(localStorage.getItem("esg_auth") || "{}") as { accessToken?: string };
         stored.accessToken = data.access;
         localStorage.setItem("esg_auth", JSON.stringify(stored));
         processQueue(null, data.access);

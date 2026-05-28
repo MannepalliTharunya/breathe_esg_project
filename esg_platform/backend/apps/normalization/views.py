@@ -29,9 +29,13 @@ class NormalizedRecordViewSet(viewsets.ModelViewSet):
     filterset_class = NormalizedRecordFilter
     ordering_fields = ["activity_date", "created_at", "co2e_kg", "activity_value"]
     ordering = ["-created_at"]
-    http_method_names = ["get", "patch", "head", "options"]  # no create/delete via API
+    # Allow POST only for custom actions (approve/reject/flag/bulk-action)
+    # Disallow create/delete via the standard router
+    http_method_names = ["get", "post", "patch", "head", "options"]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return NormalizedRecord.objects.none()
         return (
             NormalizedRecord.objects.filter(organization=self.request.organization)
             .select_related(
@@ -41,6 +45,14 @@ class NormalizedRecordViewSet(viewsets.ModelViewSet):
             .prefetch_related("approvals")
             .order_by("-created_at")
         )
+
+    def create(self, request, *args, **kwargs):
+        from rest_framework.exceptions import MethodNotAllowed
+        raise MethodNotAllowed("POST")
+
+    def destroy(self, request, *args, **kwargs):
+        from rest_framework.exceptions import MethodNotAllowed
+        raise MethodNotAllowed("DELETE")
 
     @action(detail=True, methods=["post"], url_path="approve",
             permission_classes=[IsTenantMember, IsAdminOrAnalyst])

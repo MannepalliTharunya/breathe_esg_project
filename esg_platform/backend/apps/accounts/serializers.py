@@ -19,7 +19,18 @@ class RegisterSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        return CustomUser.objects.create_user(**validated_data)
+        user = CustomUser.objects.create_user(**validated_data)
+        # Auto-assign to first available organization if none specified
+        if not user.organization_id:
+            from apps.organizations.models import Organization, OrganizationMember
+            first_org = Organization.objects.filter(is_active=True).first()
+            if first_org:
+                user.organization = first_org
+                user.save(update_fields=["organization"])
+                OrganizationMember.objects.get_or_create(
+                    organization=first_org, user=user
+                )
+        return user
 
 
 class LoginSerializer(serializers.Serializer):

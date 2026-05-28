@@ -15,6 +15,8 @@ class AuditLogListView(generics.ListAPIView):
     ordering = ["-created_at"]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return AuditLog.objects.none()
         return AuditLog.objects.filter(
             organization=self.request.organization
         ).select_related("user").order_by("-created_at")
