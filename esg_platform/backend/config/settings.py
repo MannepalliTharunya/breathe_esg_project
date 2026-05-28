@@ -27,7 +27,7 @@ THIRD_PARTY_APPS = [
     "corsheaders",
     "django_filters",
     "drf_spectacular",
-    "django_celery_results",
+    
 ]
 
 LOCAL_APPS = [
@@ -88,11 +88,9 @@ DATABASES = {
 # ── Cache ─────────────────────────────────────────────────────────────────────
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": config("REDIS_URL", default="redis://localhost:6379/0"),
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
     }
 }
-
 # ── Auth ──────────────────────────────────────────────────────────────────────
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
