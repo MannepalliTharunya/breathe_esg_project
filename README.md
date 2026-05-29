@@ -1,148 +1,109 @@
 # ESG Platform
 
-Production-grade full-stack ESG (Environmental, Social, Governance) data management and reporting platform.
+A full-stack ESG (Environmental, Social, Governance) data management and reporting platform.
+
+**Live Demo**
+- Frontend: https://breathe-esg-project-3.onrender.com
+- Backend API: https://breathe-esg-project-2-jwck.onrender.com/api/v1/
+- API Docs: https://breathe-esg-project-2-jwck.onrender.com/api/docs/
 
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
 | Frontend | React 18 + TypeScript + Tailwind CSS + Vite |
-| State | Zustand (auth, org, UI) + React Query (server state) |
+| State | Zustand + React Query |
 | Backend | Django 5 + Django REST Framework |
 | Auth | Simple JWT (access + refresh tokens, blacklist) |
-| Database | MySQL 8 |
+| Database | PostgreSQL |
 | Cache / Queue | Redis + Celery + Celery Beat |
-| Reports | ReportLab (PDF) + Pandas (data processing) |
-| Monitoring | Sentry + Prometheus |
-| Proxy | Nginx |
-| Container | Docker + Docker Compose |
+| Reports | ReportLab (PDF) + Pandas |
+| Deployment | Render (backend + frontend + PostgreSQL + Redis) |
 
 ## Project Structure
 
 ```
-esg-platform/
+breathe_esg_project/
 ├── backend/
 │   ├── apps/
-│   │   ├── core/          # Base models, pagination, permissions, exceptions
-│   │   ├── users/         # Custom user model, JWT auth, password reset
+│   │   ├── core/          # Base models, pagination, permissions
+│   │   ├── users/         # Custom user model, JWT auth
 │   │   ├── organizations/ # Multi-tenant orgs, facilities, memberships
-│   │   ├── esg_data/      # Metrics, data points, targets, materiality
-│   │   ├── reports/       # Async PDF report generation (GRI, TCFD, SASB)
+│   │   ├── esg_data/      # Metrics, data points, targets
+│   │   ├── reports/       # Async PDF report generation
 │   │   ├── frameworks/    # ESG framework catalogue (GRI, TCFD, SASB, CSRD)
 │   │   ├── audit/         # Immutable audit log
-│   │   ├── notifications/ # In-app + email notifications via Celery
-│   │   └── integrations/  # External data source connectors
-│   ├── config/
-│   │   ├── settings/      # base / development / production
-│   │   ├── urls.py
-│   │   ├── celery.py
-│   │   └── wsgi.py
-│   └── tests/
+│   │   ├── notifications/ # In-app notifications
+│   │   └── integrations/  # External data connectors
+│   └── config/
+│       └── settings/      # base / local / production
 ├── frontend/
 │   └── src/
-│       ├── components/    # UI, navigation, ESG, dashboard, notifications
-│       ├── hooks/         # React Query hooks for every domain
-│       ├── layouts/       # AppLayout, AuthLayout
-│       ├── pages/         # Route-level page components
-│       ├── services/api/  # Axios service layer
-│       ├── store/         # Zustand stores (auth, org, ui)
-│       ├── types/         # TypeScript interfaces
-│       └── utils/         # cn, formatters, validators
-├── nginx/
-│   └── nginx.conf
+│       ├── components/
+│       ├── hooks/
+│       ├── pages/
+│       ├── services/api/
+│       ├── store/
+│       └── types/
 ├── docker-compose.yml
-└── Makefile
+└── render.yaml
 ```
 
-## Quick Start
+## Local Development
 
-### 1. Clone and configure environment
+### Backend
 
 ```bash
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
-# Edit both .env files with your values
+cd backend
+pip install -r requirements.txt
+python manage.py migrate --settings=config.settings.local
+python manage.py seed_esg_data --settings=config.settings.local
+python manage.py runserver --settings=config.settings.local
 ```
 
-### 2. Start with Docker Compose
+API runs at http://127.0.0.1:8000
+
+### Frontend
 
 ```bash
-make build
-make up
-make migrate
-make createsuperuser
+cd frontend
+npm install
+npm run dev
 ```
 
-The platform will be available at:
-- **Frontend**: http://localhost:3000
-- **API**: http://localhost:8000/api/v1/
-- **API Docs**: http://localhost:8000/api/docs/
-- **Admin**: http://localhost:8000/admin/
+Frontend runs at http://localhost:3000
 
-### 3. Local development (without Docker)
-
-```bash
-# Backend
-make install-backend
-make dev-backend
-
-# Frontend (separate terminal)
-make install-frontend
-make dev-frontend
-```
+> Local settings use SQLite — no PostgreSQL or Redis needed.
 
 ## Key Features
 
-### ESG Data Management
-- Metric catalogue with GRI/TCFD/SASB/CSRD framework mappings
+- Metric catalogue with GRI / TCFD / SASB / CSRD framework mappings
 - Multi-step approval workflow: Draft → Submitted → Under Review → Approved → Published
-- Bulk import via CSV/Excel with field mapping
-- Confidence scoring and data provenance tracking
-- Facility-level data collection
-
-### Reporting
-- Async PDF report generation via Celery
-- Supports GRI Standards, TCFD, SASB, CDP, CSRD, and custom formats
-- Auto-notification when reports are ready
-
-### Multi-tenancy
-- Organization-scoped data via `X-Organization-Id` header
+- Bulk CSV/Excel import with field mapping
+- Async PDF report generation (GRI, TCFD, SASB, CDP, CSRD)
+- Multi-tenant: organization-scoped data via `X-Organization-Id` header
 - Role-based access: Owner, Admin, ESG Manager, Analyst, Viewer, Auditor
-- Facility management
-
-### Security
-- JWT with automatic silent refresh
-- Token blacklisting on logout
-- Account lockout after failed login attempts
-- Immutable audit log for all mutations
-- Rate limiting on auth endpoints (nginx)
-- HSTS, CSP, and security headers in production
-
-### Integrations
-- REST API connector with field mapping
-- SFTP connector (extensible)
-- Celery-based scheduled sync
-
-## Running Tests
-
-```bash
-make test
-make test-coverage
-```
-
-## API Documentation
-
-Interactive Swagger UI is available at `/api/docs/` when the backend is running.
+- JWT with silent refresh and token blacklisting
+- Immutable audit log for all data mutations
 
 ## Environment Variables
 
 See `backend/.env.example` and `frontend/.env.example` for all required variables.
 
-## Production Deployment
+Key backend vars for production:
+- `DATABASE_URL` — PostgreSQL connection string (auto-injected by Render)
+- `DJANGO_SECRET_KEY` — secret key
+- `DJANGO_ALLOWED_HOSTS` — comma-separated allowed hosts
+- `DJANGO_CORS_ALLOWED_ORIGINS` — frontend URL(s)
+- `REDIS_URL` — Redis connection string
 
-1. Set `DJANGO_DEBUG=False` in `backend/.env`
-2. Configure real `DJANGO_SECRET_KEY` and `JWT_SIGNING_KEY`
-3. Set up SSL certificates in `nginx/ssl/`
-4. Configure S3 for file storage (`USE_S3=True`)
-5. Set `SENTRY_DSN` for error tracking
-6. Run `make build && make up`
+## Deployment (Render)
+
+The `render.yaml` defines all services. On first deploy:
+1. Render provisions PostgreSQL and Redis automatically
+2. Backend runs `migrate`, `create_default_superuser`, and `seed_esg_data` on startup
+3. Frontend is built with `VITE_API_BASE_URL` pointing to the backend
+
+## API Documentation
+
+Swagger UI available at `/api/docs/` on the running backend.
