@@ -45,6 +45,7 @@ export function BulkImportModal({ onClose }: BulkImportModalProps) {
   const [preview, setPreview] = useState<PreviewRow[] | null>(null);
   const [previewErrors, setPreviewErrors] = useState<Array<{ row: number; error: string }>>([]);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [templateDownloading, setTemplateDownloading] = useState(false);
 
   const { activeOrganization, activeOrganizationId } = useOrganizationStore();
   const { data: periods, isLoading: periodsLoading, isError: periodsError, error: periodsLoadError } = usePeriods();
@@ -108,13 +109,41 @@ export function BulkImportModal({ onClose }: BulkImportModalProps) {
   });
 
   const handleDownloadTemplate = async () => {
-    const { data } = await masterDataService.downloadImportTemplate();
-    const url = window.URL.createObjectURL(new Blob([data]));
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "esg_import_template.csv";
-    a.click();
-    window.URL.revokeObjectURL(url);
+    setTemplateDownloading(true);
+    try {
+      const response = await masterDataService.downloadImportTemplate();
+      // response.data is a Blob when responseType: "blob"
+      const blob = response.data instanceof Blob
+        ? response.data
+        : new Blob([response.data as BlobPart], { type: "text/csv" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "esg_import_template.csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch {
+      // API unreachable or auth error — generate the template client-side
+      const csvContent = [
+        "metric_code,value,facility_code,data_source,collection_method,notes",
+        "ELECTRICITY_CONSUMPTION,12500.5,hyderabad_plant,sap,erp_system,January grid usage",
+        "DIESEL_CONSUMPTION,890.2,chennai_factory,utility_portal,utility_bill,Fleet diesel",
+        "BUSINESS_TRAVEL_EMISSIONS,45.8,,concur,erp_system,Q1 business travel",
+      ].join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "esg_import_template.csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } finally {
+      setTemplateDownloading(false);
+    }
   };
 
   const handleImport = () => {
@@ -176,9 +205,10 @@ export function BulkImportModal({ onClose }: BulkImportModalProps) {
                   type="button"
                   className="btn-secondary text-xs gap-1 flex-shrink-0"
                   onClick={handleDownloadTemplate}
+                  disabled={templateDownloading}
                 >
                   <Download className="w-3.5 h-3.5" />
-                  Template
+                  {templateDownloading ? "Downloading…" : "Template"}
                 </button>
               </div>
 
