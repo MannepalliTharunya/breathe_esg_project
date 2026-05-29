@@ -73,6 +73,10 @@ services:
         value: "False"
       - key: SENTRY_DSN
         value: ""
+      - key: DJANGO_SUPERUSER_EMAIL
+        value: "admin@esgplatform.com"
+      - key: DJANGO_SUPERUSER_PASSWORD
+        generateValue: true
 
   # ── Redis ─────────────────────────────────────────────────────────────────
   - type: redis

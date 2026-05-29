@@ -33,8 +33,10 @@ RUN chown -R appuser:appgroup /app
 USER appuser
 
 # Render injects $PORT (defaults to 10000). Shell form required so $PORT expands at runtime.
-# Run migrations before starting gunicorn so the DB schema is always up to date.
+# Startup sequence: migrate → create superuser → seed master data → serve
 CMD python manage.py migrate --noinput && \
+    python manage.py create_default_superuser && \
+    python manage.py seed_esg_data && \
     gunicorn config.wsgi:application \
     --bind 0.0.0.0:${PORT:-10000} \
     --workers 2 \
