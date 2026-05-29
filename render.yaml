@@ -15,12 +15,12 @@ services:
         value: "False"
       # ⚠️  Replace with your actual Render web-service hostname after first deploy
       - key: DJANGO_ALLOWED_HOSTS
-        value: "esg-backend.onrender.com"
+        value: "breathe-esg-project-2-jwck.onrender.com"
       # ⚠️  Replace with your actual frontend URL
       - key: DJANGO_CORS_ALLOWED_ORIGINS
-        value: "https://esg-frontend.onrender.com"
+        value: "https://breathe-esg-project-2-jwck.onrender.com"
       - key: FRONTEND_URL
-        value: "https://esg-frontend.onrender.com"
+        value: "https://breathe-esg-project-2-jwck.onrender.com"
 
       # ── Database (Render managed MySQL / external) ────────────────────────
       # If using Render's managed Postgres you would use fromDatabase here.

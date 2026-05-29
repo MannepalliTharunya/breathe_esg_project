@@ -47,8 +47,8 @@ services:
     buildCommand: npm install && npm run build
     publishPath: frontend/dist # or frontend/build depending on your vite/CRA config
     envVars:
-      - key: VITE_API_URL # or REACT_APP_API_URL
-        value: https://esg-backend.onrender.com # replace with your actual backend URL
+      - key: VITE_API_BASE_URL
+        value: https://breathe-esg-project-2-jwck.onrender.com/api/v1
 
 # 4. Managed Redis for Celery Broker
   - type: redis
