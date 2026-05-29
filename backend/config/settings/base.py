@@ -88,6 +88,16 @@ WSGI_APPLICATION = "config.wsgi.application"
 # ---------------------------------------------------------------------------
 # Database
 # ---------------------------------------------------------------------------
+_db_options: dict = {
+    "charset": "utf8mb4",
+    "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
+}
+
+# PlanetScale and other managed MySQL providers require SSL.
+# Set MYSQL_SSL=true in the environment to enable it.
+if config("MYSQL_SSL", default=False, cast=bool):
+    _db_options["ssl"] = {"ssl_disabled": False}
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
@@ -96,10 +106,7 @@ DATABASES = {
         "PASSWORD": config("MYSQL_PASSWORD"),
         "HOST": config("MYSQL_HOST", default="db"),
         "PORT": config("MYSQL_PORT", default="3306"),
-        "OPTIONS": {
-            "charset": "utf8mb4",
-            "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
+        "OPTIONS": _db_options,
         "CONN_MAX_AGE": 60,
     }
 }

@@ -35,6 +35,8 @@ services:
         sync: false
       - key: MYSQL_PORT
         value: "3306"
+      - key: MYSQL_SSL
+        value: "true"
 
       # ── Redis ─────────────────────────────────────────────────────────────
       - key: REDIS_URL
