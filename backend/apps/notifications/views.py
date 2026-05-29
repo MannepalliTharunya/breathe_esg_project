@@ -11,6 +11,8 @@ class NotificationListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return Notification.objects.none()
         qs = Notification.objects.filter(recipient=self.request.user)
         unread_only = self.request.query_params.get("unread")
         if unread_only == "true":
@@ -26,9 +28,12 @@ class NotificationListView(generics.ListAPIView):
 
 
 class NotificationMarkReadView(generics.UpdateAPIView):
+    serializer_class = NotificationSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return Notification.objects.none()
         return Notification.objects.filter(recipient=self.request.user)
 
     def update(self, request, *args, **kwargs):

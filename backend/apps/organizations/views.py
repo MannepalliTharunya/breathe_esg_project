@@ -10,6 +10,8 @@ class OrganizationViewSet(viewsets.ModelViewSet):
     serializer_class = OrganizationSerializer
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return Organization.objects.none()
         user = self.request.user
         if user.is_superuser:
             return Organization.objects.all()

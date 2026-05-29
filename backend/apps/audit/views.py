@@ -16,6 +16,8 @@ class AuditLogListView(generics.ListAPIView):
     ordering = ["-created_at"]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return AuditLog.objects.none()
         org_id = self.request.headers.get("X-Organization-Id")
         qs = AuditLog.objects.all()
         if org_id:

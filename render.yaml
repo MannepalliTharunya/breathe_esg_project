@@ -1,0 +1,89 @@
+services:
+  # ── Backend (Django + Gunicorn) ───────────────────────────────────────────
+  - type: web
+    name: esg-backend
+    runtime: docker
+    # Path is relative to the repo root where this render.yaml lives
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.production
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "False"
+      # ⚠️  Replace with your actual Render web-service hostname after first deploy
+      - key: DJANGO_ALLOWED_HOSTS
+        value: "esg-backend.onrender.com"
+      # ⚠️  Replace with your actual frontend URL
+      - key: DJANGO_CORS_ALLOWED_ORIGINS
+        value: "https://esg-frontend.onrender.com"
+      - key: FRONTEND_URL
+        value: "https://esg-frontend.onrender.com"
+
+      # ── Database (Render managed MySQL / external) ────────────────────────
+      # If using Render's managed Postgres you would use fromDatabase here.
+      # For external MySQL, set these manually in the Render dashboard.
+      - key: MYSQL_DATABASE
+        sync: false   # set manually in Render dashboard
+      - key: MYSQL_USER
+        sync: false
+      - key: MYSQL_PASSWORD
+        sync: false
+      - key: MYSQL_HOST
+        sync: false
+      - key: MYSQL_PORT
+        value: "3306"
+
+      # ── Redis ─────────────────────────────────────────────────────────────
+      - key: REDIS_URL
+        fromService:
+          name: esg-redis
+          type: redis
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          name: esg-redis
+          type: redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          name: esg-redis
+          type: redis
+          property: connectionString
+
+      # ── JWT ───────────────────────────────────────────────────────────────
+      - key: JWT_ACCESS_TOKEN_LIFETIME_MINUTES
+        value: "60"
+      - key: JWT_REFRESH_TOKEN_LIFETIME_DAYS
+        value: "7"
+      # JWT_SIGNING_KEY falls back to DJANGO_SECRET_KEY if not set — fine.
+
+      # ── Email ─────────────────────────────────────────────────────────────
+      - key: EMAIL_BACKEND
+        value: "django.core.mail.backends.smtp.EmailBackend"
+      - key: EMAIL_HOST
+        sync: false
+      - key: EMAIL_PORT
+        value: "587"
+      - key: EMAIL_USE_TLS
+        value: "True"
+      - key: EMAIL_HOST_USER
+        sync: false
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        value: "noreply@esgplatform.com"
+
+      # ── Optional ──────────────────────────────────────────────────────────
+      - key: USE_S3
+        value: "False"
+      - key: SENTRY_DSN
+        value: ""
+
+  # ── Redis ─────────────────────────────────────────────────────────────────
+  - type: redis
+    name: esg-redis
+    plan: free
+    maxmemoryPolicy: noeviction

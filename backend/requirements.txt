@@ -11,7 +11,6 @@ django-mysql==4.14.0
 
 # Auth
 djangorestframework-simplejwt==5.3.1
-django-allauth==0.63.6
 
 # Async / Task Queue
 celery==5.4.0
