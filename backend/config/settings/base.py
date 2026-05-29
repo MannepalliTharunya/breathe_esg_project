@@ -86,30 +86,34 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 # ---------------------------------------------------------------------------
-# Database
+# Database — PostgreSQL via DATABASE_URL (Render injects this automatically)
+# Falls back to individual vars for Docker Compose compatibility.
 # ---------------------------------------------------------------------------
-_db_options: dict = {
-    "charset": "utf8mb4",
-    "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
-}
+_database_url = config("DATABASE_URL", default="")
 
-# PlanetScale and other managed MySQL providers require SSL.
-# Set MYSQL_SSL=true in the environment to enable it.
-if config("MYSQL_SSL", default=False, cast=bool):
-    _db_options["ssl"] = {"ssl_disabled": False}
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": config("MYSQL_DATABASE"),
-        "USER": config("MYSQL_USER"),
-        "PASSWORD": config("MYSQL_PASSWORD"),
-        "HOST": config("MYSQL_HOST", default="db"),
-        "PORT": config("MYSQL_PORT", default="3306"),
-        "OPTIONS": _db_options,
-        "CONN_MAX_AGE": 60,
+if _database_url:
+    # Render managed Postgres — parse the URL directly
+    import dj_database_url  # type: ignore[import]
+    DATABASES = {
+        "default": dj_database_url.parse(
+            _database_url,
+            conn_max_age=60,
+            ssl_require=True,
+        )
     }
-}
+else:
+    # Docker Compose / local fallback using individual vars
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": config("POSTGRES_DB", default="esg_platform"),
+            "USER": config("POSTGRES_USER", default="esg_user"),
+            "PASSWORD": config("POSTGRES_PASSWORD", default="esg_password"),
+            "HOST": config("POSTGRES_HOST", default="db"),
+            "PORT": config("POSTGRES_PORT", default="5432"),
+            "CONN_MAX_AGE": 60,
+        }
+    }
 
 # ---------------------------------------------------------------------------
 # Cache / Redis

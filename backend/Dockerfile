@@ -8,11 +8,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install system dependencies for mysqlclient
+# Install system dependencies for psycopg2
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    default-libmysqlclient-dev \
+    libpq-dev \
     gcc \
-    pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
@@ -25,9 +24,7 @@ COPY . .
 # real secrets are not available in the build environment (Render build stage).
 RUN DJANGO_SECRET_KEY=build-time-placeholder \
     DJANGO_ALLOWED_HOSTS=localhost \
-    MYSQL_DATABASE=placeholder \
-    MYSQL_USER=placeholder \
-    MYSQL_PASSWORD=placeholder \
+    DATABASE_URL=postgres://placeholder:placeholder@localhost/placeholder \
     python manage.py collectstatic --noinput
 
 # Create non-root user

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { authService } from "@/services/api/auth.service";
 import { useAuthStore } from "@/store/authStore";
 import { toast } from "@/store/uiStore";
+import { getApiErrorMessage } from "@/utils/apiError";
 import type { LoginRequest, RegisterRequest } from "@/types/auth.types";
 
 export const AUTH_KEYS = {
@@ -34,8 +35,8 @@ export function useLogin() {
       toast.success("Welcome back!", `Logged in as ${response.user.email}`);
       navigate("/dashboard");
     },
-    onError: () => {
-      toast.error("Login failed", "Invalid email or password.");
+    onError: (error) => {
+      toast.error("Login failed", getApiErrorMessage(error, "Invalid email or password."));
     },
   });
 }
@@ -52,8 +53,8 @@ export function useRegister() {
       toast.success("Account created", "Welcome to the ESG Platform.");
       navigate("/dashboard");
     },
-    onError: () => {
-      toast.error("Registration failed", "Please check your details and try again.");
+    onError: (error) => {
+      toast.error("Registration failed", getApiErrorMessage(error, "Please check your details and try again."));
     },
   });
 }

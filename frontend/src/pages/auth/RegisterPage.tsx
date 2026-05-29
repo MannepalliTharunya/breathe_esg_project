@@ -3,6 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Link } from "react-router-dom";
 import { useRegister } from "@/hooks/useAuth";
+import { getApiErrorMessage } from "@/utils/apiError";
 
 const schema = z
   .object({
@@ -88,6 +89,14 @@ export function RegisterPage() {
         >
           {register_.isPending ? "Creating account..." : "Create account"}
         </button>
+
+        {register_.error && (
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg" role="alert">
+            <p className="text-sm text-red-700">
+              {getApiErrorMessage(register_.error, "Registration failed. Please try again.")}
+            </p>
+          </div>
+        )}
       </form>
 
       <p className="text-center text-sm text-gray-500 mt-6">

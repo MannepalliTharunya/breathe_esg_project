@@ -22,21 +22,11 @@ services:
       - key: FRONTEND_URL
         value: "https://breathe-esg-project-2-jwck.onrender.com"
 
-      # ── Database (Render managed MySQL / external) ────────────────────────
-      # If using Render's managed Postgres you would use fromDatabase here.
-      # For external MySQL, set these manually in the Render dashboard.
-      - key: MYSQL_DATABASE
-        sync: false   # set manually in Render dashboard
-      - key: MYSQL_USER
-        sync: false
-      - key: MYSQL_PASSWORD
-        sync: false
-      - key: MYSQL_HOST
-        sync: false
-      - key: MYSQL_PORT
-        value: "3306"
-      - key: MYSQL_SSL
-        value: "true"
+      # ── Database — Render managed PostgreSQL (free, native) ─────────────
+      - key: DATABASE_URL
+        fromDatabase:
+          name: esg-db
+          property: connectionString
 
       # ── Redis ─────────────────────────────────────────────────────────────
       - key: REDIS_URL
@@ -89,3 +79,8 @@ services:
     name: esg-redis
     plan: free
     maxmemoryPolicy: noeviction
+
+databases:
+  # ── PostgreSQL — Render managed, free tier ────────────────────────────────
+  - name: esg-db
+    plan: free

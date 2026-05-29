@@ -6,8 +6,8 @@ django-filter==24.2
 django-extensions==3.2.3
 
 # Database
-mysqlclient==2.2.4
-django-mysql==4.14.0
+psycopg2-binary==2.9.9
+dj-database-url==2.2.0
 
 # Auth
 djangorestframework-simplejwt==5.3.1

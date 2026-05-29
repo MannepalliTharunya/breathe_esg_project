@@ -3,6 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Link } from "react-router-dom";
 import { useLogin } from "@/hooks/useAuth";
+import { getApiErrorMessage } from "@/utils/apiError";
 
 const schema = z.object({
   email: z.string().email("Enter a valid email address"),
@@ -69,7 +70,9 @@ export function LoginPage() {
 
         {login.error && (
           <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg" role="alert">
-            <p className="text-sm text-red-700">Invalid email or password.</p>
+            <p className="text-sm text-red-700">
+              {getApiErrorMessage(login.error, "Invalid email or password.")}
+            </p>
           </div>
         )}
 
