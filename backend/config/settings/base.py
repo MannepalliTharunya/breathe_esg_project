@@ -187,6 +187,10 @@ SIMPLE_JWT = {
 # ---------------------------------------------------------------------------
 CORS_ALLOWED_ORIGINS = config("DJANGO_CORS_ALLOWED_ORIGINS", default="http://localhost:3000", cast=Csv())
 CORS_ALLOW_CREDENTIALS = True
+
+# In development (DEBUG=True), also allow all localhost ports
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_HEADERS = [
     "accept",
     "accept-encoding",
