@@ -191,6 +191,15 @@ class Command(BaseCommand):
                 defaults={"role": role, "is_active": True},
             )
 
+        # Also add any users created after the last seed run
+        all_users = User.objects.all()
+        for user in all_users:
+            OrganizationMembership.objects.get_or_create(
+                user=user,
+                organization=org,
+                defaults={"role": OrganizationMembership.Role.ADMIN, "is_active": True},
+            )
+
     def _seed_facilities(self, org):
         facility_defs = [
             ("Hyderabad Plant", "manufacturing", "Hyderabad", "Telangana"),
