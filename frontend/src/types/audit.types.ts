@@ -26,14 +26,3 @@ export interface AuditLog {
   status_code: number | null;
   created_at: string;
 }
-
-export interface PaginatedResponse<T> {
-  pagination: {
-    count: number;
-    total_pages: number;
-    current_page: number;
-    next: string | null;
-    previous: string | null;
-  };
-  results: T[];
-}

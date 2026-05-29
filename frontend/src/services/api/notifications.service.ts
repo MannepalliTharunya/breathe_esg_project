@@ -1,5 +1,5 @@
 import apiClient from "./client";
-import type { Notification, NotificationsResponse } from "@/types/notifications.types";
+import type { NotificationsResponse } from "@/types/notifications.types";
 
 export const notificationsService = {
   getNotifications: (unreadOnly = false) =>

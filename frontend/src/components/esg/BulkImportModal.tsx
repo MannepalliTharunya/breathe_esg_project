@@ -72,7 +72,7 @@ export function BulkImportModal({ onClose }: BulkImportModalProps) {
     setPreviewLoading(true);
     try {
       const data = await masterDataService.previewBulkImport(f);
-      setPreview((data.preview ?? []) as PreviewRow[]);
+      setPreview((data.preview ?? []) as unknown as PreviewRow[]);
       setPreviewErrors(data.errors ?? []);
       if (data.errors?.length && data.detected_columns?.length) {
         const base = data.errors[0]?.error ?? "";

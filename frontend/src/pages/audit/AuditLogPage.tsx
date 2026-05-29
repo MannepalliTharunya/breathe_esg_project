@@ -84,7 +84,7 @@ export function AuditLogPage() {
                     <td colSpan={6} className="text-center py-12 text-gray-400">No audit log entries found.</td>
                   </tr>
                 ) : (
-                  data?.results.map((log) => (
+                  data?.results.map((log: import("@/types/audit.types").AuditLog) => (
                     <tr key={log.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-3 text-gray-500 whitespace-nowrap text-xs">
                         {formatDateTime(log.created_at)}

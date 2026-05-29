@@ -22,7 +22,7 @@ export function useOrganizationInit() {
     }
 
     const existing = activeOrganizationId
-      ? data.results.find((o) => o.id === activeOrganizationId)
+      ? data.results.find((o: { id: string }) => o.id === activeOrganizationId)
       : undefined;
 
     if (existing) {
@@ -32,7 +32,7 @@ export function useOrganizationInit() {
 
     // Prefer org with seeded demo data, else first membership
     const preferred =
-      data.results.find((o) => o.name === "RGVF Manufacturing") ?? data.results[0];
+      data.results.find((o: { name: string }) => o.name === "RGVF Manufacturing") ?? data.results[0];
     setActiveOrganization(preferred);
   }, [isAuthenticated, isLoading, data, activeOrganizationId, setActiveOrganization, clearOrganization]);
 

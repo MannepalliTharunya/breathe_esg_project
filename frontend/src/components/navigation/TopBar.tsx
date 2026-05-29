@@ -1,7 +1,6 @@
 import { User, LogOut, ChevronDown } from "lucide-react";
 import { useMe, useLogout } from "@/hooks/useAuth";
 import { NotificationsPanel } from "@/components/notifications/NotificationsPanel";
-import { cn } from "@/utils/cn";
 import { useState } from "react";
 
 export function TopBar() {

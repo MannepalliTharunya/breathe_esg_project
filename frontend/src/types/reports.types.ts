@@ -22,14 +22,3 @@ export interface ReportCreate {
   reporting_period: string;
   generation_config?: Record<string, unknown>;
 }
-
-export interface PaginatedResponse<T> {
-  pagination: {
-    count: number;
-    total_pages: number;
-    current_page: number;
-    next: string | null;
-    previous: string | null;
-  };
-  results: T[];
-}

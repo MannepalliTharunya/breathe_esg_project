@@ -1,5 +1,6 @@
 import apiClient from "./client";
-import type { Report, ReportCreate, PaginatedResponse } from "@/types/reports.types";
+import type { Report, ReportCreate } from "@/types/reports.types";
+import type { PaginatedResponse } from "@/types/esg.types";
 
 export const reportsService = {
   getReports: (params?: Record<string, string>) =>

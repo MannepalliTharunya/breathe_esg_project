@@ -38,7 +38,7 @@ export function OrganizationPage() {
             <PageLoader />
           ) : (
             <ul className="space-y-3" aria-label="Team members">
-              {members?.results.map((m) => (
+              {members?.results.map((m: import("@/types/organization.types").Membership) => (
                 <li key={m.id} className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-medium text-sm flex-shrink-0">
                     {m.user.full_name.charAt(0)}
@@ -65,7 +65,7 @@ export function OrganizationPage() {
             <PageLoader />
           ) : (
             <ul className="space-y-3" aria-label="Facilities">
-              {facilities?.results.map((f) => (
+              {facilities?.results.map((f: import("@/types/organization.types").Facility) => (
                 <li key={f.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50">
                   <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
                     <Building2 className="w-4 h-4 text-gray-500" aria-hidden="true" />

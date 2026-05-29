@@ -76,7 +76,7 @@ export function DataPointForm({ onSuccess, onCancel }: DataPointFormProps) {
       payload.text_value = data.text_value;
     }
 
-    createDataPoint.mutate(payload as Parameters<typeof createDataPoint.mutate>[0], {
+    createDataPoint.mutate(payload as unknown as Parameters<typeof createDataPoint.mutate>[0], {
       onSuccess: () => onSuccess?.(),
     });
   };
@@ -150,7 +150,7 @@ export function DataPointForm({ onSuccess, onCancel }: DataPointFormProps) {
         <label htmlFor="facility" className="label">Facility</label>
         <select id="facility" className="input" {...register("facility")}>
           <option value="">All facilities / not specified</option>
-          {facilitiesData?.results.map((f) => (
+          {facilitiesData?.results.map((f: import("@/types/organization.types").Facility) => (
             <option key={f.id} value={f.id}>{f.name}</option>
           ))}
         </select>

@@ -1,5 +1,6 @@
 import apiClient from "./client";
-import type { Organization, Facility, Membership, PaginatedResponse } from "@/types/organization.types";
+import type { Organization, Facility, Membership } from "@/types/organization.types";
+import type { PaginatedResponse } from "@/types/esg.types";
 
 export const organizationsService = {
   getOrganizations: () =>

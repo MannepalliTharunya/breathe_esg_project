@@ -26,7 +26,7 @@ export function ReportsPage() {
 
   const frameworkOptions = frameworks?.results ?? [];
   const reportTypeLabel = (code: string) =>
-    frameworkOptions.find((f) => f.code === code)?.name ?? code.toUpperCase();
+    frameworkOptions.find((f: { code: string; name: string }) => f.code === code)?.name ?? code.toUpperCase();
 
   const handleCreate = () => {
     if (!form.name || !form.reporting_period) return;
@@ -75,7 +75,7 @@ export function ReportsPage() {
                 {frameworkOptions.length === 0 ? (
                   <option value="gri">GRI Standards</option>
                 ) : (
-                  frameworkOptions.map((fw) => (
+                  frameworkOptions.map((fw: { id: string; code: string; name: string }) => (
                     <option key={fw.id} value={fw.code}>{fw.name}</option>
                   ))
                 )}
@@ -118,7 +118,7 @@ export function ReportsPage() {
             </div>
           ) : (
             <ul className="divide-y divide-gray-100" aria-label="Reports list">
-              {data?.results.map((report) => (
+              {data?.results.map((report: import("@/types/reports.types").Report) => (
                 <li key={report.id} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors">
                   <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
                     <FileText className="w-5 h-5 text-gray-500" aria-hidden="true" />

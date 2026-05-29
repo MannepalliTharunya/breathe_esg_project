@@ -44,14 +44,3 @@ export interface Membership {
   is_active: boolean;
   joined_at: string;
 }
-
-export interface PaginatedResponse<T> {
-  pagination: {
-    count: number;
-    total_pages: number;
-    current_page: number;
-    next: string | null;
-    previous: string | null;
-  };
-  results: T[];
-}
