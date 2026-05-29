@@ -5,7 +5,7 @@ import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "ax
 import { useAuthStore } from "@/store/authStore";
 import { useOrganizationStore } from "@/store/organizationStore";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api/v1";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "https://breathe-esg-project-2-jwck.onrender.com/api/v1";
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: BASE_URL,

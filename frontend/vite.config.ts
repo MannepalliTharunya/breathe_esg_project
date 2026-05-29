@@ -23,6 +23,13 @@ export default defineConfig({
       },
     },
   },
+  define: {
+    // Fallback so production builds always point to the deployed backend
+    // even if VITE_API_BASE_URL is not injected at build time.
+    __VITE_API_BASE_URL__: JSON.stringify(
+      process.env.VITE_API_BASE_URL ?? "https://breathe-esg-project-2-jwck.onrender.com/api/v1"
+    ),
+  },
   server: {
     port: 3000,
     proxy: {
