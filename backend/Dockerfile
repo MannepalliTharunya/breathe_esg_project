@@ -22,6 +22,5 @@ RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
 RUN chown -R appuser:appgroup /app
 USER appuser
 
-EXPOSE 8000
-
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Render injects the PORT env variable automatically. Gunicorn reads it.
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:10000"]
