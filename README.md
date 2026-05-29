@@ -102,8 +102,55 @@ Key backend vars for production:
 The `render.yaml` defines all services. On first deploy:
 1. Render provisions PostgreSQL and Redis automatically
 2. Backend runs `migrate`, `create_default_superuser`, and `seed_esg_data` on startup
-3. Frontend is built with `VITE_API_BASE_URL` pointing to the backend
+3. Frontend is built with `VITE_API_BASE_URL` pointing to the backend<img width="1897" height="914" alt="Screenshot 2026-05-29 225857" src="https://github.com/user-attachments/assets/b8b1f413-16be-4c44-90e1-8b6fbf27741d" />
 
 ## API Documentation
-
 Swagger UI available at `/api/docs/` on the running backend.
+<img width="1919" height="891" alt="Screenshot 2026-05-29 225847" src="https://github.com/user-attachments/assets/f11939f8-f395-46b5-9348-bd045ac74f1b" />
+<img width="1897" height="914" alt="Screenshot 2026-05-29 225857" src="https://github.com/user-attachments/assets/b5132889-eea9-40e6-8e84-27d3cc3b7135" />
+<img width="1914" height="916" alt="Screenshot 2026-05-29 225954" src="https://github.com/user-attachments/assets/0c85bf3c-a35b-4f33-971d-4fce3ecf78d1" />
+<img width="1918" height="900" alt="Screenshot 2026-05-29 230003" src="https://github.com/user-attachments/assets/6d780a5e-2000-472c-a0ae-2d840963d807" />
+<img width="1919" height="914" alt="Screenshot 2026-05-29 230013" src="https://github.com/user-attachments/assets/685f5a8b-b6b6-4e91-902f-91cde598e815" />
+
+<img width="1919" height="900" alt="Screenshot 2026-05-29 230023" src="https://github.com/user-attachments/assets/ea68a573-af2d-41fe-81fd-dbeae1bbf9e1" />
+<img width="1918" height="874" alt="Screenshot 2026-05-29 230037" src="https://github.com/user-attachments/assets/64fa3278-5e6d-495f-99ce-cc3e10db72aa" />
+<img width="1919" height="918" alt="Screenshot 2026-05-29 230053" src="https://github.com/user-attachments/assets/827bdc9b-cfd5-4102-a424-910dd3cc1098" />
+<img width="1919" height="879" alt="Screenshot 2026-05-29 230100" src="https://github.com/user-attachments/assets/964bbe4f-541f-4789-8055-2f570a979f38" />
+<img width="1919" height="869" alt="Screenshot 2026-05-29 230106" src="https://github.com/user-attachments/assets/37122988-b1bb-43c5-b7f9-853462bff0b2" />
+<img width="1912" height="861" alt="Screenshot 2026-05-29 230112" src="https://github.com/user-attachments/assets/499791b0-ee1f-4a80-aa88-99c4088d455f" />
+<img width="1919" height="900" alt="Screenshot 2026-05-29 230118" src="https://github.com/user-attachments/assets/4b356fa2-1854-4a91-8345-c6fa6fad979b" />
+<img width="1919" height="901" alt="Screenshot 2026-05-29 230127" src="https://github.com/user-attachments/assets/ea6d83c7-e3f9-4400-8444-9f6f32a8fa91" />
+<img width="1914" height="887" alt="Screenshot 2026-05-29 230134" src="https://github.com/user-attachments/assets/e421fcb7-7d8a-4bfb-875a-6d7b3e32592b" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<img width="1919" height="914" alt="Screenshot 2026-05-29 230013" src="https://github.com/user-attachments/assets/3172d315-3220-4faf-aa9d-cc45db6651f2" />
+<img width="1918" height="900" alt="Screenshot 2026-05-29 230003" src="https://github.com/user-attachments/assets/de3520ca-7efb-4664-b30e-50847b68515a" />
+<img width="1914" height="916" alt="Screenshot 2026-05-29 225954" src="https://github.com/user-attachments/assets/ce119cd6-2624-43ee-8126-4ac27572842d" />
+![Uploading Screenshot 2026-05-29 225857.png…]()
